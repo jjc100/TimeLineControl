@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -11,14 +12,38 @@ using System.Windows.Shapes;
 
 namespace TimeLineTest
 {
-  /// <summary>
-  /// Interaction logic for MainWindow.xaml
-  /// </summary>
-  public partial class MainWindow : Window
-  {
-    public MainWindow()
+
+    public partial class MainViewModel
     {
-      InitializeComponent();
+        public DateTime MyEndTime { get; set; } = DateTime.Now.AddDays(1);
+        public DateTime MyStartTime { get; set; } = DateTime.Now.AddDays(-1);
+        public DateTime MySelectedTime { get; set; } = DateTime.Now;
+
+
+        public ObservableCollection<(DateTime Start, DateTime End)> MyRecordings { get; set; }  = new ObservableCollection<(DateTime Start, DateTime End)>
+        {
+            (DateTime.Now.AddDays(-1), DateTime.Now.AddDays(-0.5)),
+            (DateTime.Now.AddDays(-0.5), DateTime.Now),
+            (DateTime.Now, DateTime.Now.AddHours(1)),
+            (DateTime.Now.AddHours(1), DateTime.Now.AddHours(2))
+        };
+
+        public MainViewModel()
+        {
+            // Initialize any properties or commands here if needed
+        }
     }
-  }
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            this.DataContext = new MainViewModel();
+
+        }
+
+    }
 }

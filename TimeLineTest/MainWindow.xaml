@@ -9,7 +9,11 @@
     Width="800"
     Height="450"
     mc:Ignorable="d">
-    <Grid>
-        <local:TimelineControl />
-    </Grid>
+
+    <local:TimelineControl
+        x:Name="MyTimeLineControl"
+        EndTime="{Binding MyEndTime}"
+        Recordings="{Binding MyRecordings}"
+        SelectedTime="{Binding MySelectedTime, Mode=TwoWay}"
+        StartTime="{Binding MyStartTime}" />
 </Window>
