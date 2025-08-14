@@ -16,6 +16,13 @@ WPF 기반 타임라인 컨트롤 예제 프로젝트
 - 녹화 구간(Recording) 시각화
 - 선택된 시간, 기준 시간 표시
 
+
+## 실행 화면
+<img width="786" height="492" alt="Image" src="https://github.com/user-attachments/assets/17bf0901-4e84-4188-ac9a-0968a43ec174" />
+<img width="80%" src="https://github.com/user-attachments/assets/1fd56d03-a740-4474-a7d9-5860f73a0e9a"/>
+
+
+
 ## 빌드 및 실행
 
 1. Visual Studio 2022 이상에서 `TimeLineTest.sln` 솔루션을 엽니다.
