@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using static TimeLineTest.RecordingBar;
 
 namespace TimeLineTest;
 
@@ -50,6 +51,12 @@ public partial class TimelineControl : UserControl
         DependencyProperty.Register(nameof(Recordings), typeof(ObservableCollection<(DateTime Start, DateTime End)>), typeof(TimelineControl),
             new PropertyMetadata(new ObservableCollection<(DateTime, DateTime)>(), OnAnyPropertyChanged));
 
+    public static readonly DependencyProperty HourMaskListProperty =
+    DependencyProperty.Register(nameof(HourMaskList), typeof(ObservableCollection<HourMask>), typeof(TimelineControl),
+        new PropertyMetadata(null, OnAnyPropertyChanged));
+
+   
+
     public DateTime StartTime
     {
         get => (DateTime)GetValue(StartTimeProperty);
@@ -73,6 +80,13 @@ public partial class TimelineControl : UserControl
         get => (ObservableCollection<(DateTime Start, DateTime End)>)GetValue(RecordingsProperty);
         set => SetValue(RecordingsProperty, value);
     }
+
+    public ObservableCollection<HourMask> HourMaskList
+    {
+        get => (ObservableCollection<HourMask>)GetValue(HourMaskListProperty);
+        set => SetValue(HourMaskListProperty, value);
+    }
+    
 
     public TimelineControl()
     {
@@ -299,25 +313,27 @@ public partial class TimelineControl : UserControl
         double barHeight = 10;
         double barY = height / 2 - barHeight / 2;
 
-        foreach (var (recStart, recEnd) in Recordings)
-        {
-            if (recEnd < StartTime || recStart > EndTime) continue;
+        DrawRecordingBars(HourMaskList, width, height);
 
-            double startX = ((recStart > StartTime ? recStart : StartTime) - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
-            double endX = ((recEnd < EndTime ? recEnd : EndTime) - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
+        //foreach (var (recStart, recEnd) in Recordings)
+        //{
+        //    if (recEnd < StartTime || recStart > EndTime) continue;
 
-            var rect = new Rectangle
-            {
-                Width = Math.Max(endX - startX, 1),
-                Height = barHeight,
-                Fill = Brushes.DeepSkyBlue,
-                RadiusX = 2,
-                RadiusY = 2,
-            };
-            Canvas.SetLeft(rect, startX);
-            Canvas.SetTop(rect, barY);
-            PART_Canvas.Children.Add(rect);
-        }
+        //    double startX = ((recStart > StartTime ? recStart : StartTime) - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
+        //    double endX = ((recEnd < EndTime ? recEnd : EndTime) - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
+
+        //    var rect = new Rectangle
+        //    {
+        //        Width = Math.Max(endX - startX, 1),
+        //        Height = barHeight,
+        //        Fill = Brushes.DeepSkyBlue,
+        //        RadiusX = 2,
+        //        RadiusY = 2,
+        //    };
+        //    Canvas.SetLeft(rect, startX);
+        //    Canvas.SetTop(rect, barY);
+        //    PART_Canvas.Children.Add(rect);
+        //}
 
         // 선택된 시간 라인 (빨간 수직선)
         double selX = (SelectedTime - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
@@ -426,5 +442,91 @@ public partial class TimelineControl : UserControl
         wasDragged = false;
         PART_Canvas.ReleaseMouseCapture();
         Draw();
+    }
+
+    public bool IsRecorded(HourMask hourMask, int minute, int second)
+    {
+        // mask가 0이 아니면 녹화된 것으로 간주
+        return hourMask.min[minute].sec[second].mask != 0;
+    }
+
+    private void DrawRecordingBars(ObservableCollection<HourMask> hourMaskList, double width, double height)
+    {
+        if (hourMaskList == null) return;
+
+        double barHeight = 10;
+        double barY = height / 2 - barHeight / 2;
+        TimeSpan totalSpan = EndTime - StartTime;
+
+        foreach(var hourMask in hourMaskList)
+        {
+            if (hourMask == null) continue;
+
+
+            // hourMask의 시간 범위
+            DateTime maskStart = hourMask.dateTime;
+            DateTime maskEnd = maskStart.AddHours(1);
+
+            // 타임라인 범위와 겹치지 않으면 건너뜀
+            if (maskEnd <= StartTime || maskStart >= EndTime)
+                continue;
+
+            int? rangeStart = null;
+            // 시간대별 녹화 표시
+            for (int i = 0; i < 3600; i++)
+            {
+                int m = i / 60;
+                int s = i % 60;
+                bool recorded = hourMask.min[m].sec[s].mask != 0;
+
+                DateTime currentSec = maskStart.AddSeconds(i);
+
+                // 현재 초가 타임라인 범위 밖이면 range를 끊음
+                //bool inTimeline = currentSec >= StartTime && currentSec < EndTime;
+
+                if (recorded && rangeStart == null)
+                {
+                    rangeStart = i;
+                }
+                // 녹화가 끝났거나, 타임라인 범위를 벗어났거나, 마지막 초일 때 range를 마감
+                if ((rangeStart != null) &&
+                    ((!recorded) || i == 3599))
+                {
+                    int rangeEnd = (recorded) ? i : i - 1;
+                    //DateTime recStart = maskStart.AddSeconds(rangeStart.Value);
+                    //DateTime recEnd = maskStart.AddSeconds(rangeEnd + 1);
+
+                    DateTime recStart = new DateTime(maskStart.Year, maskStart.Month, maskStart.Day, maskStart.Hour, 0, 0);
+                    recStart = recStart.AddSeconds(rangeStart.Value + 1);
+                    DateTime recEnd = new DateTime(maskStart.Year, maskStart.Month, maskStart.Day, maskStart.Hour, 0 ,0);
+                    recEnd = recEnd.AddSeconds(rangeEnd + 1);
+
+                    // 실제로 타임라인 범위와 겹치는 구간만 그리기
+                    DateTime drawStart = recStart < StartTime ? StartTime : recStart;
+                    DateTime drawEnd = recEnd > EndTime ? EndTime : recEnd;
+
+                    if (recEnd > recStart)
+                    {
+                        double startX = (recStart - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
+                        double endX = (recEnd - StartTime).TotalSeconds / totalSpan.TotalSeconds * width;
+
+                        var rect = new Rectangle
+                        {
+                            Width = Math.Max(endX - startX, 1),
+                            Height = barHeight,
+                            Fill = Brushes.DeepSkyBlue,
+                            RadiusX = 2,
+                            RadiusY = 2,
+                            IsHitTestVisible = false
+                        };
+                        Canvas.SetLeft(rect, startX);
+                        Canvas.SetTop(rect, barY);
+                        PART_Canvas.Children.Add(rect);
+                    }
+                    rangeStart = null;
+                }
+            }
+        }
+        
     }
 }

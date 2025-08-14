@@ -13,6 +13,7 @@
     <local:TimelineControl
         x:Name="MyTimeLineControl"
         EndTime="{Binding MyEndTime}"
+        HourMaskList="{Binding MyHourMasks}"
         Recordings="{Binding MyRecordings}"
         SelectedTime="{Binding MySelectedTime, Mode=TwoWay}"
         StartTime="{Binding MyStartTime}" />
