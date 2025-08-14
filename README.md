@@ -18,7 +18,6 @@ WPF 기반 타임라인 컨트롤 예제 프로젝트
 
 
 ## 실행 화면
-<img width="786" height="492" alt="Image" src="https://github.com/user-attachments/assets/17bf0901-4e84-4188-ac9a-0968a43ec174" />
 <img width="80%" src="https://github.com/user-attachments/assets/1fd56d03-a740-4474-a7d9-5860f73a0e9a"/>
 
 
